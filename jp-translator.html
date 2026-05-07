@@ -4,46 +4,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JP 번역 도구</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; }
-  .card { background: #fff; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 32px; width: 100%; max-width: 640px; }
-  .header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
-  .header h1 { font-size: 20px; font-weight: 600; color: #111; }
-  .header .sub { margin-left: auto; font-size: 12px; color: #999; }
-  .mode-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .pill { font-size: 13px; padding: 6px 16px; border-radius: 99px; cursor: pointer; border: 1.5px solid #e0e0e0; background: #fff; color: #666; transition: all 0.15s; font-family: inherit; }
-  .pill.sel { background: #111; color: #fff; border-color: #111; }
-  .input-wrap { position: relative; margin-bottom: 14px; }
-  textarea { width: 100%; min-height: 110px; resize: vertical; border: 1.5px solid #e0e0e0; border-radius: 12px; padding: 14px 16px; font-size: 15px; font-family: inherit; color: #111; line-height: 1.6; transition: border 0.15s; outline: none; }
-  textarea:focus { border-color: #999; }
-  textarea::placeholder { color: #bbb; }
-  .char { position: absolute; bottom: 12px; right: 14px; font-size: 11px; color: #ccc; }
-  .actions { display: flex; gap: 8px; margin-bottom: 20px; }
-  .lang-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 10px; cursor: pointer; border: 1.5px solid #e0e0e0; background: #f9f9f9; color: #333; font-family: inherit; transition: all 0.15s; }
-  .lang-btn.off { background: #fff; color: #ccc; border-color: #eee; }
-  .go-btn { padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; border: none; background: #111; color: #fff; font-family: inherit; transition: opacity 0.15s; white-space: nowrap; }
-  .go-btn:hover { opacity: 0.8; }
-  .go-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .status { font-size: 12px; color: #999; margin-bottom: 12px; min-height: 18px; }
-  .result-box { border: 1.5px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
-  .r-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #f9f9f9; border-bottom: 1px solid #eee; }
-  .r-label { font-size: 12px; font-weight: 600; color: #555; }
-  .copy-btn { font-size: 12px; padding: 4px 12px; border: 1px solid #e0e0e0; border-radius: 6px; cursor: pointer; background: #fff; color: #555; font-family: inherit; transition: background 0.1s; }
-  .copy-btn:hover { background: #f0f0f0; }
-  .copy-btn.done { color: #2a9d5c; border-color: #2a9d5c; }
-  .r-body { padding: 16px; min-height: 72px; font-size: 15px; line-height: 1.75; color: #111; }
-  .r-body.empty { color: #ccc; }
-  .r-body.err { color: #e55; font-size: 13px; }
-  .r-body.loading { color: #bbb; }
-  .footer { margin-top: 24px; text-align: center; font-size: 11px; color: #ccc; }
-  .api-row { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; }
-  .api-row input { flex: 1; padding: 8px 12px; font-size: 13px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-family: inherit; outline: none; color: #333; }
-  .api-row input:focus { border-color: #999; }
-  .api-row input.ok { border-color: #2a9d5c; }
-  .api-save { padding: 8px 14px; font-size: 13px; border: none; border-radius: 8px; background: #333; color: #fff; cursor: pointer; font-family: inherit; white-space: nowrap; }
-  .api-save:hover { background: #111; }
-  .api-label { font-size: 11px; color: #999; white-space: nowrap; }
+:root {
+  --bg: #f0ede8; --card: #fff; --text: #1a1a1a; --sub: #888;
+  --border: #e0dbd4; --accent: #2c5f2e; --accent-light: #e8f0e8;
+  --danger: #c0392b; --shadow: 0 2px 12px rgba(0,0,0,0.07); --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; }
+.card { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 32px; width: 100%; max-width: 660px; }
+.header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header .sub { margin-left: auto; font-size: 12px; color: var(--sub); }
+
+/* API KEY */
+.key-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 12px 14px; background: var(--bg); border-radius: 10px; border: 1.5px solid var(--border); }
+.key-label { font-size: 12px; color: var(--sub); white-space: nowrap; }
+.key-input { flex: 1; border: none; background: transparent; font-size: 13px; font-family: 'DM Mono', monospace; color: var(--text); outline: none; min-width: 0; }
+.key-input::placeholder { color: #ccc; }
+.key-btn { font-size: 12px; padding: 5px 14px; border-radius: 8px; cursor: pointer; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; transition: all 0.15s; }
+.key-btn.saved { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+.key-status { font-size: 11px; color: var(--accent); white-space: nowrap; display: none; }
+
+/* MODES */
+.mode-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.pill { font-size: 12px; padding: 5px 16px; border-radius: 99px; cursor: pointer; border: 1.5px solid var(--border); background: var(--card); color: var(--sub); font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
+.pill.sel { background: var(--text); color: var(--card); border-color: var(--text); }
+
+/* INPUT */
+.inp-wrap { position: relative; margin-bottom: 14px; }
+textarea { width: 100%; min-height: 110px; resize: vertical; border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px 28px; font-size: 15px; font-family: 'Noto Sans KR', sans-serif; outline: none; background: var(--bg); color: var(--text); line-height: 1.6; }
+textarea:focus { border-color: #999; }
+textarea::placeholder { color: #ccc; }
+.cnt { position: absolute; bottom: 10px; right: 12px; font-size: 11px; color: #ccc; }
+
+/* ACTIONS */
+.actions { display: flex; gap: 8px; margin-bottom: 16px; }
+.lang-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--border); background: #f5f5f5; color: var(--text); font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
+.lang-btn.off { background: var(--card); color: #ccc; border-color: #eee; }
+.go-btn { padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; border: none; background: var(--text); color: var(--card); font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
+.go-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.status { font-size: 12px; color: var(--sub); min-height: 20px; margin-bottom: 12px; }
+
+/* RESULTS */
+.result { border: 1.5px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+.r-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f9f9f9; border-bottom: 1px solid #eee; }
+.r-label { font-size: 12px; font-weight: 600; color: var(--sub); }
+.copy-btn { font-size: 12px; padding: 3px 12px; border: 1px solid #e0e0e0; border-radius: 6px; cursor: pointer; background: var(--card); color: var(--sub); font-family: 'Noto Sans KR', sans-serif; }
+.copy-btn.ok { color: var(--accent); border-color: var(--accent); }
+.r-body { padding: 14px 16px; min-height: 70px; font-size: 15px; line-height: 1.75; }
+.r-body.empty { color: #ccc; }
+.r-body.err { color: var(--danger); font-size: 13px; }
+.footer { margin-top: 20px; text-align: center; font-size: 11px; color: #ccc; }
 </style>
 </head>
 <body>
@@ -54,10 +68,12 @@
     <span class="sub">한국어 → 중국어 / 영어</span>
   </div>
 
-  <div class="api-row">
-    <span class="api-label">API Key</span>
-    <input type="password" id="apikey" placeholder="sk-ant-api03-..." oninput="saveKey()" />
-    <button class="api-save" onclick="saveKey()">저장</button>
+  <div class="key-row">
+    <span class="key-label">API Key</span>
+    <input class="key-input" id="key-input" type="password" placeholder="sk-ant-api03-...">
+    <span class="key-status" id="key-status">✓ 저장됨</span>
+    <button class="key-btn" id="key-btn" onclick="saveKey()">저장</button>
+    <button class="key-btn" id="key-change" onclick="changeKey()" style="display:none">변경</button>
   </div>
 
   <div class="mode-row">
@@ -66,11 +82,11 @@
     <button class="pill" data-mode="email" onclick="setMode(this)">이메일</button>
   </div>
 
-  <div class="input-wrap">
+  <div class="inp-wrap">
     <textarea id="inp" placeholder="번역할 한국어 입력... (Ctrl+Enter로 번역)"
       oninput="document.getElementById('cnt').textContent=this.value.length+'자'"
       onkeydown="if(event.ctrlKey&&event.key==='Enter')go()"></textarea>
-    <span class="char" id="cnt">0자</span>
+    <span class="cnt" id="cnt">0자</span>
   </div>
 
   <div class="actions">
@@ -81,18 +97,18 @@
 
   <div class="status" id="status"></div>
 
-  <div id="cn-box" class="result-box">
+  <div id="cn-box" class="result">
     <div class="r-head">
       <span class="r-label">🇨🇳 중국어</span>
-      <button class="copy-btn" id="copy-cn" onclick="cp('cn-out','copy-cn')">복사</button>
+      <button class="copy-btn" id="cp-cn" onclick="cp('cn-out','cp-cn')">복사</button>
     </div>
     <div class="r-body empty" id="cn-out">번역 결과 표시</div>
   </div>
 
-  <div id="en-box" class="result-box">
+  <div id="en-box" class="result">
     <div class="r-head">
       <span class="r-label">🇺🇸 영어</span>
-      <button class="copy-btn" id="copy-en" onclick="cp('en-out','copy-en')">복사</button>
+      <button class="copy-btn" id="cp-en" onclick="cp('en-out','cp-en')">복사</button>
     </div>
     <div class="r-body empty" id="en-out">번역 결과 표시</div>
   </div>
@@ -101,104 +117,127 @@
 </div>
 
 <script>
-function saveKey() {
-  const v = document.getElementById("apikey").value.trim();
-  if (v) { localStorage.setItem("jp_api_key", v); document.getElementById("apikey").classList.add("ok"); }
-}
-function getKey() { return localStorage.getItem("jp_api_key") || ""; }
-window.addEventListener("DOMContentLoaded", () => {
-  const saved = getKey();
-  if (saved) { document.getElementById("apikey").value = saved; document.getElementById("apikey").classList.add("ok"); }
-});
-
+const STORAGE_KEY = 'jp-api-key';
 const MODE_DESC = {
-  business: "비즈니스 공식체, 격식있고 전문적으로",
-  sns: "캐주얼하고 친근한 말투로",
-  email: "이메일 형식으로 공손하고 명확하게"
+  business: '격식있고 전문적인 비즈니스 문체로',
+  sns: '친근하고 캐주얼한 말투로',
+  email: '이메일 형식으로 공손하고 명확하게'
 };
-let mode = "business";
+let mode = 'business';
 let on = { cn: true, en: true };
 
+// API Key 로드
+function loadKey() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    document.getElementById('key-input').value = saved;
+    document.getElementById('key-input').disabled = true;
+    document.getElementById('key-btn').style.display = 'none';
+    document.getElementById('key-change').style.display = '';
+    document.getElementById('key-status').style.display = '';
+  }
+}
+
+function saveKey() {
+  const val = document.getElementById('key-input').value.trim();
+  if (!val) { alert('API Key를 입력해주세요.'); return; }
+  localStorage.setItem(STORAGE_KEY, val);
+  document.getElementById('key-input').disabled = true;
+  document.getElementById('key-btn').style.display = 'none';
+  document.getElementById('key-change').style.display = '';
+  document.getElementById('key-status').style.display = '';
+  document.getElementById('status').textContent = '✓ API Key가 저장됐습니다.';
+  setTimeout(() => document.getElementById('status').textContent = '', 2000);
+}
+
+function changeKey() {
+  document.getElementById('key-input').disabled = false;
+  document.getElementById('key-input').value = '';
+  document.getElementById('key-btn').style.display = '';
+  document.getElementById('key-change').style.display = 'none';
+  document.getElementById('key-status').style.display = 'none';
+  document.getElementById('key-input').focus();
+}
+
 function setMode(el) {
-  document.querySelectorAll(".pill").forEach(p => p.classList.remove("sel"));
-  el.classList.add("sel");
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
   mode = el.dataset.mode;
 }
 
 function tog(lang) {
   on[lang] = !on[lang];
-  const btn = document.getElementById("btn-" + lang);
-  btn.classList.toggle("off", !on[lang]);
-  btn.textContent = (on[lang] ? "✓ " : "") + (lang === "cn" ? "🇨🇳 중국어" : "🇺🇸 영어");
-  document.getElementById(lang + "-box").style.display = on[lang] ? "" : "none";
+  const btn = document.getElementById('btn-' + lang);
+  btn.classList.toggle('off', !on[lang]);
+  btn.textContent = (on[lang] ? '✓ ' : '') + (lang === 'cn' ? '🇨🇳 중국어' : '🇺🇸 영어');
+  document.getElementById(lang + '-box').style.display = on[lang] ? '' : 'none';
 }
 
-function setOut(lang, text, cls) {
-  const el = document.getElementById(lang + "-out");
-  el.className = "r-body" + (cls ? " " + cls : "");
+function setOut(id, text, cls) {
+  const el = document.getElementById(id);
+  el.className = 'r-body' + (cls ? ' ' + cls : '');
   el.textContent = text;
 }
 
-function setStatus(msg) { document.getElementById("status").textContent = msg; }
-
 async function go() {
-  const API_KEY = getKey();
-  if (!API_KEY) { setStatus("⚠ API Key를 먼저 입력하고 저장하세요"); return; }
-  const text = document.getElementById("inp").value.trim();
-  if (!text) { setStatus("⚠ 텍스트를 입력해주세요"); return; }
-  const jobs = [on.cn && "cn", on.en && "en"].filter(Boolean);
-  if (!jobs.length) { setStatus("⚠ 언어를 하나 이상 선택하세요"); return; }
+  const apiKey = localStorage.getItem(STORAGE_KEY);
+  if (!apiKey) { document.getElementById('status').textContent = '⚠ API Key를 먼저 저장해주세요.'; return; }
+  const text = document.getElementById('inp').value.trim();
+  if (!text) { document.getElementById('status').textContent = '⚠ 번역할 텍스트를 입력하세요.'; return; }
+  const jobs = ['cn', 'en'].filter(l => on[l]);
+  if (!jobs.length) { document.getElementById('status').textContent = '⚠ 언어를 선택하세요.'; return; }
 
-  document.getElementById("gobtn").disabled = true;
-  setStatus("번역 중...");
-  jobs.forEach(l => setOut(l, "번역 중...", "loading"));
+  document.getElementById('gobtn').disabled = true;
+  document.getElementById('status').textContent = '번역 중...';
+  jobs.forEach(l => { setOut(l + '-out', '번역 중...', ''); document.getElementById(l + '-out').style.color = '#ccc'; });
 
   await Promise.all(jobs.map(async lang => {
-    const target = lang === "cn" ? "중국어 간체" : "영어";
+    const target = lang === 'cn' ? '중국어 간체' : '영어';
     const prompt = `다음 한국어를 ${target}로 번역하세요. 스타일: ${MODE_DESC[mode]}. 번역문만 출력하고 설명 없이.\n\n${text}`;
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "x-api-key": API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          model: 'claude-sonnet-4-6',
           max_tokens: 1000,
-          messages: [{ role: "user", content: prompt }]
+          messages: [{ role: 'user', content: prompt }]
         })
       });
       if (!r.ok) {
-        const err = await r.text();
-        setOut(lang, `오류 ${r.status}: ${err.slice(0,100)}`, "err");
+        const e = await r.text();
+        setOut(lang + '-out', '오류 ' + r.status + ': ' + e.slice(0, 100), 'err');
       } else {
         const data = await r.json();
-        const out = data.content?.map(b => b.text || "").join("").trim();
-        setOut(lang, out || "결과 없음");
+        setOut(lang + '-out', data.content?.map(b => b.text || '').join('').trim() || '결과 없음');
       }
-    } catch(e) {
-      setOut(lang, `네트워크 오류: ${e.message}`, "err");
+    } catch (e) {
+      setOut(lang + '-out', '네트워크 오류: ' + e.message, 'err');
     }
   }));
 
-  setStatus("완료 ✓");
-  document.getElementById("gobtn").disabled = false;
+  document.getElementById('status').textContent = '완료 ✓';
+  document.getElementById('gobtn').disabled = false;
 }
 
 async function cp(id, btnId) {
   const el = document.getElementById(id);
-  if (el.classList.contains("empty") || el.classList.contains("loading")) return;
+  if (el.classList.contains('empty') || el.classList.contains('err')) return;
+  const btn = document.getElementById(btnId);
   try {
     await navigator.clipboard.writeText(el.textContent);
-    const btn = document.getElementById(btnId);
-    btn.textContent = "✓ 복사됨";
-    btn.classList.add("done");
-    setTimeout(() => { btn.textContent = "복사"; btn.classList.remove("done"); }, 1500);
-  } catch(e) {}
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('ok'); }, 1500);
+  } catch (e) {}
 }
+
+loadKey();
 </script>
 </body>
 </html>
