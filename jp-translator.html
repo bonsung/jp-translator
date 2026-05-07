@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JP 번역 도구</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; }
+  .card { background: #fff; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 32px; width: 100%; max-width: 640px; }
+  .header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+  .header h1 { font-size: 20px; font-weight: 600; color: #111; }
+  .header .sub { margin-left: auto; font-size: 12px; color: #999; }
+  .mode-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .pill { font-size: 13px; padding: 6px 16px; border-radius: 99px; cursor: pointer; border: 1.5px solid #e0e0e0; background: #fff; color: #666; transition: all 0.15s; font-family: inherit; }
+  .pill.sel { background: #111; color: #fff; border-color: #111; }
+  .input-wrap { position: relative; margin-bottom: 14px; }
+  textarea { width: 100%; min-height: 110px; resize: vertical; border: 1.5px solid #e0e0e0; border-radius: 12px; padding: 14px 16px; font-size: 15px; font-family: inherit; color: #111; line-height: 1.6; transition: border 0.15s; outline: none; }
+  textarea:focus { border-color: #999; }
+  textarea::placeholder { color: #bbb; }
+  .char { position: absolute; bottom: 12px; right: 14px; font-size: 11px; color: #ccc; }
+  .actions { display: flex; gap: 8px; margin-bottom: 20px; }
+  .lang-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 10px; cursor: pointer; border: 1.5px solid #e0e0e0; background: #f9f9f9; color: #333; font-family: inherit; transition: all 0.15s; }
+  .lang-btn.off { background: #fff; color: #ccc; border-color: #eee; }
+  .go-btn { padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; border: none; background: #111; color: #fff; font-family: inherit; transition: opacity 0.15s; white-space: nowrap; }
+  .go-btn:hover { opacity: 0.8; }
+  .go-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .status { font-size: 12px; color: #999; margin-bottom: 12px; min-height: 18px; }
+  .result-box { border: 1.5px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+  .r-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #f9f9f9; border-bottom: 1px solid #eee; }
+  .r-label { font-size: 12px; font-weight: 600; color: #555; }
+  .copy-btn { font-size: 12px; padding: 4px 12px; border: 1px solid #e0e0e0; border-radius: 6px; cursor: pointer; background: #fff; color: #555; font-family: inherit; transition: background 0.1s; }
+  .copy-btn:hover { background: #f0f0f0; }
+  .copy-btn.done { color: #2a9d5c; border-color: #2a9d5c; }
+  .r-body { padding: 16px; min-height: 72px; font-size: 15px; line-height: 1.75; color: #111; }
+  .r-body.empty { color: #ccc; }
+  .r-body.err { color: #e55; font-size: 13px; }
+  .r-body.loading { color: #bbb; }
+  .footer { margin-top: 24px; text-align: center; font-size: 11px; color: #ccc; }
+  .api-row { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; }
+  .api-row input { flex: 1; padding: 8px 12px; font-size: 13px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-family: inherit; outline: none; color: #333; }
+  .api-row input:focus { border-color: #999; }
+  .api-row input.ok { border-color: #2a9d5c; }
+  .api-save { padding: 8px 14px; font-size: 13px; border: none; border-radius: 8px; background: #333; color: #fff; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .api-save:hover { background: #111; }
+  .api-label { font-size: 11px; color: #999; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <span style="font-size:22px">🌐</span>
+    <h1>JP 번역 도구</h1>
+    <span class="sub">한국어 → 중국어 / 영어</span>
+  </div>
+
+  <div class="api-row">
+    <span class="api-label">API Key</span>
+    <input type="password" id="apikey" placeholder="sk-ant-api03-..." oninput="saveKey()" />
+    <button class="api-save" onclick="saveKey()">저장</button>
+  </div>
+
+  <div class="mode-row">
+    <button class="pill sel" data-mode="business" onclick="setMode(this)">비즈니스</button>
+    <button class="pill" data-mode="sns" onclick="setMode(this)">SNS / 캐주얼</button>
+    <button class="pill" data-mode="email" onclick="setMode(this)">이메일</button>
+  </div>
+
+  <div class="input-wrap">
+    <textarea id="inp" placeholder="번역할 한국어 입력... (Ctrl+Enter로 번역)"
+      oninput="document.getElementById('cnt').textContent=this.value.length+'자'"
+      onkeydown="if(event.ctrlKey&&event.key==='Enter')go()"></textarea>
+    <span class="char" id="cnt">0자</span>
+  </div>
+
+  <div class="actions">
+    <button class="lang-btn" id="btn-cn" onclick="tog('cn')">✓ 🇨🇳 중국어</button>
+    <button class="lang-btn" id="btn-en" onclick="tog('en')">✓ 🇺🇸 영어</button>
+    <button class="go-btn" id="gobtn" onclick="go()">→ 번역</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div id="cn-box" class="result-box">
+    <div class="r-head">
+      <span class="r-label">🇨🇳 중국어</span>
+      <button class="copy-btn" id="copy-cn" onclick="cp('cn-out','copy-cn')">복사</button>
+    </div>
+    <div class="r-body empty" id="cn-out">번역 결과 표시</div>
+  </div>
+
+  <div id="en-box" class="result-box">
+    <div class="r-head">
+      <span class="r-label">🇺🇸 영어</span>
+      <button class="copy-btn" id="copy-en" onclick="cp('en-out','copy-en')">복사</button>
+    </div>
+    <div class="r-body empty" id="en-out">번역 결과 표시</div>
+  </div>
+
+  <div class="footer">Powered by Claude · Easytech JP</div>
+</div>
+
+<script>
+function saveKey() {
+  const v = document.getElementById("apikey").value.trim();
+  if (v) { localStorage.setItem("jp_api_key", v); document.getElementById("apikey").classList.add("ok"); }
+}
+function getKey() { return localStorage.getItem("jp_api_key") || ""; }
+window.addEventListener("DOMContentLoaded", () => {
+  const saved = getKey();
+  if (saved) { document.getElementById("apikey").value = saved; document.getElementById("apikey").classList.add("ok"); }
+});
+
+const MODE_DESC = {
+  business: "비즈니스 공식체, 격식있고 전문적으로",
+  sns: "캐주얼하고 친근한 말투로",
+  email: "이메일 형식으로 공손하고 명확하게"
+};
+let mode = "business";
+let on = { cn: true, en: true };
+
+function setMode(el) {
+  document.querySelectorAll(".pill").forEach(p => p.classList.remove("sel"));
+  el.classList.add("sel");
+  mode = el.dataset.mode;
+}
+
+function tog(lang) {
+  on[lang] = !on[lang];
+  const btn = document.getElementById("btn-" + lang);
+  btn.classList.toggle("off", !on[lang]);
+  btn.textContent = (on[lang] ? "✓ " : "") + (lang === "cn" ? "🇨🇳 중국어" : "🇺🇸 영어");
+  document.getElementById(lang + "-box").style.display = on[lang] ? "" : "none";
+}
+
+function setOut(lang, text, cls) {
+  const el = document.getElementById(lang + "-out");
+  el.className = "r-body" + (cls ? " " + cls : "");
+  el.textContent = text;
+}
+
+function setStatus(msg) { document.getElementById("status").textContent = msg; }
+
+async function go() {
+  const API_KEY = getKey();
+  if (!API_KEY) { setStatus("⚠ API Key를 먼저 입력하고 저장하세요"); return; }
+  const text = document.getElementById("inp").value.trim();
+  if (!text) { setStatus("⚠ 텍스트를 입력해주세요"); return; }
+  const jobs = [on.cn && "cn", on.en && "en"].filter(Boolean);
+  if (!jobs.length) { setStatus("⚠ 언어를 하나 이상 선택하세요"); return; }
+
+  document.getElementById("gobtn").disabled = true;
+  setStatus("번역 중...");
+  jobs.forEach(l => setOut(l, "번역 중...", "loading"));
+
+  await Promise.all(jobs.map(async lang => {
+    const target = lang === "cn" ? "중국어 간체" : "영어";
+    const prompt = `다음 한국어를 ${target}로 번역하세요. 스타일: ${MODE_DESC[mode]}. 번역문만 출력하고 설명 없이.\n\n${text}`;
+    try {
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      if (!r.ok) {
+        const err = await r.text();
+        setOut(lang, `오류 ${r.status}: ${err.slice(0,100)}`, "err");
+      } else {
+        const data = await r.json();
+        const out = data.content?.map(b => b.text || "").join("").trim();
+        setOut(lang, out || "결과 없음");
+      }
+    } catch(e) {
+      setOut(lang, `네트워크 오류: ${e.message}`, "err");
+    }
+  }));
+
+  setStatus("완료 ✓");
+  document.getElementById("gobtn").disabled = false;
+}
+
+async function cp(id, btnId) {
+  const el = document.getElementById(id);
+  if (el.classList.contains("empty") || el.classList.contains("loading")) return;
+  try {
+    await navigator.clipboard.writeText(el.textContent);
+    const btn = document.getElementById(btnId);
+    btn.textContent = "✓ 복사됨";
+    btn.classList.add("done");
+    setTimeout(() => { btn.textContent = "복사"; btn.classList.remove("done"); }, 1500);
+  } catch(e) {}
+}
+</script>
+</body>
+</html>
