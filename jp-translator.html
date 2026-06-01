@@ -45,7 +45,7 @@ textarea::placeholder { color: #ccc; }
 .r-label { font-size: 12px; font-weight: 600; color: var(--sub); }
 .copy-btn { font-size: 12px; padding: 3px 12px; border: 1px solid #e0e0e0; border-radius: 6px; cursor: pointer; background: var(--card); color: var(--sub); font-family: 'Noto Sans KR', sans-serif; }
 .copy-btn.ok { color: var(--accent); border-color: var(--accent); }
-.r-body { padding: 14px 16px; min-height: 70px; font-size: 15px; line-height: 1.75; }
+.r-body { padding: 14px 16px; min-height: 70px; font-size: 15px; line-height: 1.75; color: #1a1a1a; }
 .r-body.empty { color: #ccc; }
 .r-body.err { color: var(--danger); font-size: 13px; }
 .copy-all-btn { display: inline-flex; align-items: center; padding: 8px 18px; font-size: 13px; font-weight: 500; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--accent); background: var(--accent-light); color: var(--accent); font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
@@ -129,6 +129,7 @@ function tog(lang) {
 function setOut(id, text, cls) {
   const el = document.getElementById(id);
   el.className = 'r-body' + (cls ? ' ' + cls : '');
+  el.style.color = '';
   el.textContent = text;
 }
 
