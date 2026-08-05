@@ -78,6 +78,7 @@ textarea::placeholder { color: #ccc; }
   <div class="actions">
     <button class="lang-btn" id="btn-cn" onclick="tog('cn')">✓ 🇨🇳 중국어</button>
     <button class="lang-btn" id="btn-en" onclick="tog('en')">✓ 🇺🇸 영어</button>
+    <button class="lang-btn off" id="btn-ko" onclick="tog('ko')">✓ 🇰🇷 한국어</button>
     <button class="go-btn" id="gobtn" onclick="go()">→ 번역</button>
   </div>
 
@@ -99,6 +100,14 @@ textarea::placeholder { color: #ccc; }
     <div class="r-body empty" id="en-out">번역 결과 표시</div>
   </div>
 
+  <div id="ko-box" class="result" style="display:none">
+    <div class="r-head">
+      <span class="r-label">🇰🇷 한국어</span>
+      <button class="copy-btn" id="cp-ko" onclick="cp('ko-out','cp-ko')">복사</button>
+    </div>
+    <div class="r-body empty" id="ko-out">번역 결과 표시</div>
+  </div>
+
   <div id="copy-all-wrap" style="display:none; margin-bottom:16px; text-align:right;">
     <button class="copy-all-btn" id="copy-all-btn" onclick="cpAll()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>전체 복사
@@ -110,7 +119,7 @@ textarea::placeholder { color: #ccc; }
 
 <script>
 let mode = 'business';
-let on = { cn: true, en: true };
+let on = { cn: true, en: true, ko: false };
 
 function setMode(el) {
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel'));
@@ -122,7 +131,7 @@ function tog(lang) {
   on[lang] = !on[lang];
   const btn = document.getElementById('btn-' + lang);
   btn.classList.toggle('off', !on[lang]);
-  btn.textContent = (on[lang] ? '✓ ' : '') + (lang === 'cn' ? '🇨🇳 중국어' : '🇺🇸 영어');
+  btn.textContent = (on[lang] ? '✓ ' : '') + (lang === 'cn' ? '🇨🇳 중국어' : lang === 'en' ? '🇺🇸 영어' : '🇰🇷 한국어');
   document.getElementById(lang + '-box').style.display = on[lang] ? '' : 'none';
 }
 
@@ -136,7 +145,7 @@ function setOut(id, text, cls) {
 async function go() {
   const text = document.getElementById('inp').value.trim();
   if (!text) { document.getElementById('status').textContent = '⚠ 번역할 텍스트를 입력하세요.'; return; }
-  const jobs = ['cn', 'en'].filter(l => on[l]);
+  const jobs = ['cn', 'en', 'ko'].filter(l => on[l]);
   if (!jobs.length) { document.getElementById('status').textContent = '⚠ 언어를 선택하세요.'; return; }
 
   document.getElementById('gobtn').disabled = true;
@@ -189,10 +198,13 @@ async function cpAll() {
   const parts = [];
   const cnEl = document.getElementById('cn-out');
   const enEl = document.getElementById('en-out');
+  const koEl = document.getElementById('ko-out');
   if (on.cn && !cnEl.classList.contains('empty') && !cnEl.classList.contains('err'))
     parts.push('🇨🇳 ' + cnEl.textContent.trim());
   if (on.en && !enEl.classList.contains('empty') && !enEl.classList.contains('err'))
     parts.push('🇺🇸 ' + enEl.textContent.trim());
+  if (on.ko && !koEl.classList.contains('empty') && !koEl.classList.contains('err'))
+    parts.push('🇰🇷 ' + koEl.textContent.trim());
   if (!parts.length) return;
   const btn = document.getElementById('copy-all-btn');
   try {
