@@ -43,14 +43,11 @@ textarea::placeholder { color: #ccc; }
 .result { border: 1.5px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
 .r-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f9f9f9; border-bottom: 1px solid #eee; }
 .r-label { font-size: 12px; font-weight: 600; color: var(--sub); }
-.copy-btn { font-size: 12px; padding: 3px 12px; border: 1px solid #e0e0e0; border-radius: 6px; cursor: pointer; background: var(--card); color: var(--sub); font-family: 'Noto Sans KR', sans-serif; }
-.copy-btn.ok { color: var(--accent); border-color: var(--accent); }
+.copy-btn { font-size: 12px; font-weight: 600; padding: 4px 14px; border: none; border-radius: 6px; cursor: pointer; background: var(--text); color: #fff; font-family: 'Noto Sans KR', sans-serif; }
+.copy-btn.ok { background: var(--accent); color: #fff; }
 .r-body { padding: 14px 16px; min-height: 70px; font-size: 15px; line-height: 1.75; color: #1a1a1a; }
 .r-body.empty { color: #ccc; }
 .r-body.err { color: var(--danger); font-size: 13px; }
-.copy-all-btn { display: inline-flex; align-items: center; padding: 8px 18px; font-size: 13px; font-weight: 500; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--accent); background: var(--accent-light); color: var(--accent); font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
-.copy-all-btn:hover { background: var(--accent); color: #fff; }
-.copy-all-btn.ok { background: var(--accent); color: #fff; }
 .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #ccc; }
 </style>
 </head>
@@ -108,12 +105,6 @@ textarea::placeholder { color: #ccc; }
     <div class="r-body empty" id="ko-out">번역 결과 표시</div>
   </div>
 
-  <div id="copy-all-wrap" style="display:none; margin-bottom:16px; text-align:right;">
-    <button class="copy-all-btn" id="copy-all-btn" onclick="cpAll()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>전체 복사
-    </button>
-  </div>
-
   <div class="footer">Powered by Claude · Easytech JP</div>
 </div>
 
@@ -150,7 +141,6 @@ async function go() {
 
   document.getElementById('gobtn').disabled = true;
   document.getElementById('status').textContent = '번역 중...';
-  document.getElementById('copy-all-wrap').style.display = 'none';
   jobs.forEach(l => { setOut(l + '-out', '번역 중...', ''); document.getElementById(l + '-out').style.color = '#ccc'; });
 
   await Promise.all(jobs.map(async lang => {
@@ -174,12 +164,6 @@ async function go() {
 
   document.getElementById('status').textContent = '완료 ✓';
   document.getElementById('gobtn').disabled = false;
-
-  const hasResult = jobs.some(l => {
-    const el = document.getElementById(l + '-out');
-    return !el.classList.contains('empty') && !el.classList.contains('err');
-  });
-  document.getElementById('copy-all-wrap').style.display = hasResult ? '' : 'none';
 }
 
 async function cp(id, btnId) {
@@ -194,29 +178,6 @@ async function cp(id, btnId) {
   } catch (e) {}
 }
 
-async function cpAll() {
-  const parts = [];
-  const cnEl = document.getElementById('cn-out');
-  const enEl = document.getElementById('en-out');
-  const koEl = document.getElementById('ko-out');
-  if (on.cn && !cnEl.classList.contains('empty') && !cnEl.classList.contains('err'))
-    parts.push('🇨🇳 ' + cnEl.textContent.trim());
-  if (on.en && !enEl.classList.contains('empty') && !enEl.classList.contains('err'))
-    parts.push('🇺🇸 ' + enEl.textContent.trim());
-  if (on.ko && !koEl.classList.contains('empty') && !koEl.classList.contains('err'))
-    parts.push('🇰🇷 ' + koEl.textContent.trim());
-  if (!parts.length) return;
-  const btn = document.getElementById('copy-all-btn');
-  try {
-    await navigator.clipboard.writeText(parts.join('\n\n'));
-    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><polyline points="20 6 9 17 4 12"/></svg>복사됨!';
-    btn.classList.add('ok');
-    setTimeout(() => {
-      btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>전체 복사';
-      btn.classList.remove('ok');
-    }, 1800);
-  } catch (e) {}
-}
 </script>
 </body>
 </html>
