@@ -51,9 +51,13 @@ textarea::placeholder { color: #ccc; }
 .r-label { font-size: 12px; font-weight: 600; color: var(--sub); }
 .copy-btn { font-size: 12px; font-weight: 600; padding: 4px 14px; border: none; border-radius: 6px; cursor: pointer; background: var(--text); color: #fff; font-family: 'Noto Sans KR', sans-serif; }
 .copy-btn.ok { background: var(--accent); color: #fff; }
-.r-body { padding: 14px 16px; min-height: 70px; font-size: 15px; line-height: 1.75; color: #1a1a1a; }
+.copy-btn:disabled { background: #ccc; color: #fff; cursor: not-allowed; opacity: 0.7; }
+.r-body { padding: 14px 16px; min-height: 70px; font-size: 15px; line-height: 1.75; color: #1a1a1a; transition: opacity 0.15s; }
 .r-body.empty { color: #ccc; }
 .r-body.err { color: var(--danger); font-size: 13px; }
+.stale-badge { display: none; font-size: 11px; font-weight: 500; color: var(--danger); margin-left: 4px; }
+.result.stale .r-body { opacity: 0.4; }
+.result.stale .stale-badge { display: inline; }
 .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #ccc; }
 </style>
 </head>
@@ -73,7 +77,7 @@ textarea::placeholder { color: #ccc; }
 
   <div class="inp-wrap">
     <textarea id="inp" placeholder="번역할 한국어 입력... (Ctrl+Enter로 번역)"
-      oninput="document.getElementById('cnt').textContent=this.value.length+'자'"
+      oninput="onInputChange(this)"
       onkeydown="if(event.ctrlKey&&event.key==='Enter')go()"></textarea>
     <span class="cnt" id="cnt">0자</span>
   </div>
@@ -89,7 +93,7 @@ textarea::placeholder { color: #ccc; }
 
   <div id="cn-box" class="result">
     <div class="r-head">
-      <span class="r-label">🇨🇳 중국어</span>
+      <span class="r-label">🇨🇳 중국어 <span class="stale-badge">· 새로 번역 필요</span></span>
       <button class="copy-btn" id="cp-cn" onclick="cp('cn-out','cp-cn')">복사</button>
     </div>
     <div class="r-body empty" id="cn-out">번역 결과 표시</div>
@@ -97,7 +101,7 @@ textarea::placeholder { color: #ccc; }
 
   <div id="en-box" class="result">
     <div class="r-head">
-      <span class="r-label">🇺🇸 영어</span>
+      <span class="r-label">🇺🇸 영어 <span class="stale-badge">· 새로 번역 필요</span></span>
       <button class="copy-btn" id="cp-en" onclick="cp('en-out','cp-en')">복사</button>
     </div>
     <div class="r-body empty" id="en-out">번역 결과 표시</div>
@@ -105,7 +109,7 @@ textarea::placeholder { color: #ccc; }
 
   <div id="ko-box" class="result" style="display:none">
     <div class="r-head">
-      <span class="r-label">🇰🇷 한국어</span>
+      <span class="r-label">🇰🇷 한국어 <span class="stale-badge">· 새로 번역 필요</span></span>
       <button class="copy-btn" id="cp-ko" onclick="cp('ko-out','cp-ko')">복사</button>
     </div>
     <div class="r-body empty" id="ko-out">번역 결과 표시</div>
@@ -122,6 +126,7 @@ function setMode(el) {
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel'));
   el.classList.add('sel');
   mode = el.dataset.mode;
+  markStale();
 }
 
 function tog(lang) {
@@ -130,6 +135,22 @@ function tog(lang) {
   btn.classList.toggle('off', !on[lang]);
   btn.textContent = (on[lang] ? '✓ ' : '') + (lang === 'cn' ? '🇨🇳 중국어' : lang === 'en' ? '🇺🇸 영어' : '🇰🇷 한국어');
   document.getElementById(lang + '-box').style.display = on[lang] ? '' : 'none';
+  markStale();
+}
+
+function onInputChange(el) {
+  document.getElementById('cnt').textContent = el.value.length + '자';
+  markStale();
+}
+
+function markStale() {
+  ['cn', 'en', 'ko'].forEach(l => {
+    const out = document.getElementById(l + '-out');
+    if (!out.classList.contains('empty') && !out.classList.contains('err')) {
+      document.getElementById(l + '-box').classList.add('stale');
+      document.getElementById('cp-' + l).disabled = true;
+    }
+  });
 }
 
 function setOut(id, text, cls) {
@@ -147,7 +168,12 @@ async function go() {
 
   document.getElementById('gobtn').disabled = true;
   document.getElementById('status').textContent = '번역 중...';
-  jobs.forEach(l => { setOut(l + '-out', '번역 중...', ''); document.getElementById(l + '-out').style.color = '#ccc'; });
+  jobs.forEach(l => {
+    setOut(l + '-out', '번역 중...', '');
+    document.getElementById(l + '-out').style.color = '#ccc';
+    document.getElementById(l + '-box').classList.remove('stale');
+    document.getElementById('cp-' + l).disabled = true;
+  });
 
   await Promise.all(jobs.map(async lang => {
     try {
@@ -162,6 +188,7 @@ async function go() {
       } else {
         const data = await r.json();
         setOut(lang + '-out', data.result || '결과 없음');
+        document.getElementById('cp-' + lang).disabled = false;
       }
     } catch (e) {
       setOut(lang + '-out', '네트워크 오류: ' + e.message, 'err');
