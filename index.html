@@ -28,6 +28,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .mode-row { display: flex; gap: 8px; margin-bottom: 16px; }
 .pill { font-size: 12px; padding: 5px 16px; border-radius: 99px; cursor: pointer; border: 1.5px solid var(--border); background: var(--card); color: var(--sub); font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
 .pill.sel { background: var(--text); color: var(--card); border-color: var(--text); }
+.clear-btn { margin-left: auto; color: #bbb; border-color: #eee; }
+.clear-btn:hover { color: var(--sub); border-color: var(--border); }
 
 /* INPUT */
 .inp-wrap { position: relative; margin-bottom: 14px; }
@@ -73,6 +75,7 @@ textarea::placeholder { color: #ccc; }
     <button class="pill sel" data-mode="business" onclick="setMode(this)">비즈니스</button>
     <button class="pill" data-mode="sns" onclick="setMode(this)">SNS / 캐주얼</button>
     <button class="pill" data-mode="email" onclick="setMode(this)">이메일</button>
+    <button class="pill clear-btn" onclick="clearAll()">Clear</button>
   </div>
 
   <div class="inp-wrap">
@@ -197,6 +200,23 @@ async function go() {
 
   document.getElementById('status').textContent = '완료 ✓';
   document.getElementById('gobtn').disabled = false;
+}
+
+function clearAll() {
+  const inp = document.getElementById('inp');
+  inp.value = '';
+  document.getElementById('cnt').textContent = '0자';
+  ['cn', 'en', 'ko'].forEach(l => {
+    setOut(l + '-out', '번역 결과 표시', 'empty');
+    document.getElementById(l + '-box').classList.remove('stale');
+    const cpBtn = document.getElementById('cp-' + l);
+    cpBtn.disabled = true;
+    cpBtn.textContent = '복사';
+    cpBtn.classList.remove('ok');
+  });
+  document.getElementById('status').textContent = '';
+  document.getElementById('gobtn').disabled = false;
+  inp.focus();
 }
 
 async function cp(id, btnId) {
