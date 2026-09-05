@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="JP 번역기">
 <meta name="theme-color" content="#f0ede8">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/pinyin-pro/dist/index.js"></script>
 <style>
 :root {
   --bg: #f0ede8; --card: #fff; --text: #1a1a1a; --sub: #888;
@@ -58,7 +59,8 @@ textarea::placeholder { color: #ccc; }
 .r-body.empty { color: #ccc; }
 .r-body.err { color: var(--danger); font-size: 13px; }
 .stale-badge { display: none; font-size: 11px; font-weight: 500; color: var(--danger); margin-left: 4px; }
-.result.stale .r-body { opacity: 0.4; }
+.pinyin { padding: 0 16px 12px; font-size: 12px; color: #999; font-family: 'DM Mono', monospace; }
+.result.stale .r-body, .result.stale .pinyin { opacity: 0.4; }
 .result.stale .stale-badge { display: inline; }
 .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #ccc; }
 </style>
@@ -100,6 +102,7 @@ textarea::placeholder { color: #ccc; }
       <button class="copy-btn" id="cp-cn" onclick="cp('cn-out','cp-cn')">복사</button>
     </div>
     <div class="r-body empty" id="cn-out">번역 결과 표시</div>
+    <div class="pinyin" id="cn-pinyin"></div>
   </div>
 
   <div id="en-box" class="result">
@@ -176,6 +179,7 @@ async function go() {
     document.getElementById(l + '-out').style.color = '#ccc';
     document.getElementById(l + '-box').classList.remove('stale');
     document.getElementById('cp-' + l).disabled = true;
+    if (l === 'cn') document.getElementById('cn-pinyin').textContent = '';
   });
 
   await Promise.all(jobs.map(async lang => {
@@ -192,6 +196,11 @@ async function go() {
         const data = await r.json();
         setOut(lang + '-out', data.result || '결과 없음');
         document.getElementById('cp-' + lang).disabled = false;
+        if (lang === 'cn' && data.result) {
+          try {
+            document.getElementById('cn-pinyin').textContent = pinyinPro.pinyin(data.result, { toneType: 'symbol', type: 'string' });
+          } catch (e) {}
+        }
       }
     } catch (e) {
       setOut(lang + '-out', '네트워크 오류: ' + e.message, 'err');
@@ -213,6 +222,7 @@ function clearAll() {
     cpBtn.disabled = true;
     cpBtn.textContent = '복사';
     cpBtn.classList.remove('ok');
+    if (l === 'cn') document.getElementById('cn-pinyin').textContent = '';
   });
   document.getElementById('status').textContent = '';
   document.getElementById('gobtn').disabled = false;
