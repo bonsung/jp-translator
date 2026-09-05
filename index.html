@@ -59,8 +59,9 @@ textarea::placeholder { color: #ccc; }
 .r-body.empty { color: #ccc; }
 .r-body.err { color: var(--danger); font-size: 13px; }
 .stale-badge { display: none; font-size: 11px; font-weight: 500; color: var(--danger); margin-left: 4px; }
-.pinyin { padding: 0 16px 12px; margin-top: -8px; font-size: 12px; color: #999; font-family: 'DM Mono', monospace; }
-.result.stale .r-body, .result.stale .pinyin { opacity: 0.4; }
+#cn-out ruby { font-size: 15px; line-height: 2.6; ruby-align: center; }
+#cn-out rt { font-size: 15px; color: #999; font-family: 'DM Mono', monospace; text-align: center; }
+.result.stale .r-body { opacity: 0.4; }
 .result.stale .stale-badge { display: inline; }
 .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #ccc; }
 </style>
@@ -102,7 +103,6 @@ textarea::placeholder { color: #ccc; }
       <button class="copy-btn" id="cp-cn" onclick="cp('cn-out','cp-cn')">복사</button>
     </div>
     <div class="r-body empty" id="cn-out">번역 결과 표시</div>
-    <div class="pinyin" id="cn-pinyin"></div>
   </div>
 
   <div id="en-box" class="result">
@@ -127,6 +127,27 @@ textarea::placeholder { color: #ccc; }
 <script>
 let mode = 'business';
 let on = { cn: true, en: true, ko: false };
+let cnRawText = '';
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function buildRubyMarkup(text) {
+  const chars = Array.from(text);
+  let pinyins = [];
+  try {
+    pinyins = pinyinPro.pinyin(text, { type: 'array', toneType: 'symbol' });
+  } catch (e) {}
+  return chars.map((ch, i) => {
+    const safeCh = escapeHtml(ch);
+    const py = pinyins[i];
+    if (py && py !== ch) {
+      return '<ruby>' + safeCh + '<rt>' + escapeHtml(py) + '</rt></ruby>';
+    }
+    return safeCh;
+  }).join('');
+}
 
 function setMode(el) {
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel'));
@@ -179,7 +200,7 @@ async function go() {
     document.getElementById(l + '-out').style.color = '#ccc';
     document.getElementById(l + '-box').classList.remove('stale');
     document.getElementById('cp-' + l).disabled = true;
-    if (l === 'cn') document.getElementById('cn-pinyin').textContent = '';
+    if (l === 'cn') cnRawText = '';
   });
 
   await Promise.all(jobs.map(async lang => {
@@ -194,13 +215,17 @@ async function go() {
         setOut(lang + '-out', '오류 ' + r.status + ': ' + e.slice(0, 120), 'err');
       } else {
         const data = await r.json();
-        setOut(lang + '-out', data.result || '결과 없음');
-        document.getElementById('cp-' + lang).disabled = false;
         if (lang === 'cn' && data.result) {
-          try {
-            document.getElementById('cn-pinyin').textContent = pinyinPro.pinyin(data.result, { toneType: 'symbol', type: 'string' });
-          } catch (e) {}
+          cnRawText = data.result;
+          const out = document.getElementById('cn-out');
+          out.className = 'r-body';
+          out.style.color = '';
+          out.innerHTML = buildRubyMarkup(data.result);
+        } else {
+          if (lang === 'cn') cnRawText = '';
+          setOut(lang + '-out', data.result || '결과 없음');
         }
+        document.getElementById('cp-' + lang).disabled = false;
       }
     } catch (e) {
       setOut(lang + '-out', '네트워크 오류: ' + e.message, 'err');
@@ -222,7 +247,7 @@ function clearAll() {
     cpBtn.disabled = true;
     cpBtn.textContent = '복사';
     cpBtn.classList.remove('ok');
-    if (l === 'cn') document.getElementById('cn-pinyin').textContent = '';
+    if (l === 'cn') cnRawText = '';
   });
   document.getElementById('status').textContent = '';
   document.getElementById('gobtn').disabled = false;
@@ -233,8 +258,9 @@ async function cp(id, btnId) {
   const el = document.getElementById(id);
   if (el.classList.contains('empty') || el.classList.contains('err')) return;
   const btn = document.getElementById(btnId);
+  const text = (id === 'cn-out' && cnRawText) ? cnRawText : el.textContent;
   try {
-    await navigator.clipboard.writeText(el.textContent);
+    await navigator.clipboard.writeText(text);
     btn.textContent = '✓ 복사됨';
     btn.classList.add('ok');
     setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('ok'); }, 1500);
