@@ -40,9 +40,10 @@ textarea::placeholder { color: #ccc; }
 .cnt { position: absolute; bottom: 10px; right: 12px; font-size: 11px; color: #ccc; }
 
 /* ACTIONS */
-.actions { display: flex; gap: 8px; margin-bottom: 16px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .lang-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--border); background: #f5f5f5; color: var(--text); font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
 .lang-btn.off { background: var(--card); color: #ccc; border-color: #eee; }
+.other-select { flex: 1 1 160px; padding: 8px 10px; font-size: 13px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
 .go-btn { padding: 10px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; border: none; background: var(--text); color: var(--card); font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
 .go-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -92,6 +93,8 @@ textarea::placeholder { color: #ccc; }
     <button class="lang-btn" id="btn-cn" onclick="tog('cn')">✓ 🇨🇳 중국어</button>
     <button class="lang-btn" id="btn-en" onclick="tog('en')">✓ 🇺🇸 영어</button>
     <button class="lang-btn off" id="btn-ko" onclick="tog('ko')">✓ 🇰🇷 한국어</button>
+    <button class="lang-btn off" id="btn-other" onclick="tog('other')">✓ 기타</button>
+    <select id="otherLangSelect" class="other-select" style="display:none" onchange="updateOtherLabel()"></select>
     <button class="go-btn" id="gobtn" onclick="go()">→ 번역</button>
   </div>
 
@@ -121,14 +124,74 @@ textarea::placeholder { color: #ccc; }
     <div class="r-body empty" id="ko-out">번역 결과 표시</div>
   </div>
 
+  <div id="other-box" class="result" style="display:none">
+    <div class="r-head">
+      <span class="r-label"><span id="other-label">기타</span> <span class="stale-badge">· 새로 번역 필요</span></span>
+      <button class="copy-btn" id="cp-other" onclick="cp('other-out','cp-other')">복사</button>
+    </div>
+    <div class="r-body empty" id="other-out">번역 결과 표시</div>
+  </div>
+
   <div class="footer">Powered by Claude · Easytech JP</div>
 </div>
 
 <script>
+const EXTRA_LANGS = [
+  { name:'Vietnamese', kr:'베트남어', flag:'🇻🇳' },
+  { name:'Thai', kr:'태국어', flag:'🇹🇭' },
+  { name:'Indonesian', kr:'인도네시아어', flag:'🇮🇩' },
+  { name:'Malay', kr:'말레이어', flag:'🇲🇾' },
+  { name:'Filipino', kr:'필리핀어(타갈로그)', flag:'🇵🇭' },
+  { name:'Spanish', kr:'스페인어', flag:'🇪🇸' },
+  { name:'French', kr:'프랑스어', flag:'🇫🇷' },
+  { name:'German', kr:'독일어', flag:'🇩🇪' },
+  { name:'Italian', kr:'이탈리아어', flag:'🇮🇹' },
+  { name:'Portuguese', kr:'포르투갈어', flag:'🇵🇹' },
+  { name:'Russian', kr:'러시아어', flag:'🇷🇺' },
+  { name:'Arabic', kr:'아랍어', flag:'🇸🇦' },
+  { name:'Hindi', kr:'힌디어', flag:'🇮🇳' },
+  { name:'Turkish', kr:'튀르키예어', flag:'🇹🇷' },
+  { name:'Mongolian', kr:'몽골어', flag:'🇲🇳' },
+  { name:'Polish', kr:'폴란드어', flag:'🇵🇱' },
+  { name:'Dutch', kr:'네덜란드어', flag:'🇳🇱' },
+  { name:'Greek', kr:'그리스어', flag:'🇬🇷' },
+  { name:'Swedish', kr:'스웨덴어', flag:'🇸🇪' },
+  { name:'Khmer', kr:'크메르어(캄보디아)', flag:'🇰🇭' },
+  { name:'Burmese', kr:'미얀마어', flag:'🇲🇲' },
+  { name:'Lao', kr:'라오스어', flag:'🇱🇦' },
+  { name:'Hebrew', kr:'히브리어', flag:'🇮🇱' },
+  { name:'Persian', kr:'페르시아어', flag:'🇮🇷' },
+  { name:'Urdu', kr:'우르두어', flag:'🇵🇰' },
+  { name:'Bengali', kr:'벵골어', flag:'🇧🇩' },
+  { name:'Ukrainian', kr:'우크라이나어', flag:'🇺🇦' },
+  { name:'Czech', kr:'체코어', flag:'🇨🇿' },
+  { name:'Hungarian', kr:'헝가리어', flag:'🇭🇺' },
+  { name:'Romanian', kr:'루마니아어', flag:'🇷🇴' },
+  { name:'Finnish', kr:'핀란드어', flag:'🇫🇮' },
+  { name:'Danish', kr:'덴마크어', flag:'🇩🇰' },
+  { name:'Norwegian', kr:'노르웨이어', flag:'🇳🇴' },
+  { name:'Nepali', kr:'네팔어', flag:'🇳🇵' },
+  { name:'Sinhala', kr:'싱할라어(스리랑카)', flag:'🇱🇰' }
+];
+
+const LANG_LABELS = { cn: '🇨🇳 중국어', en: '🇺🇸 영어', ko: '🇰🇷 한국어', other: '기타' };
+
 let mode = 'business';
-let on = { cn: true, en: true, ko: false };
-updateGoBtnText();
+let on = { cn: true, en: true, ko: false, other: false };
 let cnRawText = '';
+
+function initOtherLangSelect() {
+  const sel = document.getElementById('otherLangSelect');
+  EXTRA_LANGS.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.name;
+    opt.textContent = l.flag + ' ' + l.kr;
+    sel.appendChild(opt);
+  });
+}
+initOtherLangSelect();
+updateOtherLabel();
+updateGoBtnText();
 
 function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -161,10 +224,20 @@ function tog(lang) {
   on[lang] = !on[lang];
   const btn = document.getElementById('btn-' + lang);
   btn.classList.toggle('off', !on[lang]);
-  btn.textContent = (on[lang] ? '✓ ' : '') + (lang === 'cn' ? '🇨🇳 중국어' : lang === 'en' ? '🇺🇸 영어' : '🇰🇷 한국어');
+  btn.textContent = (on[lang] ? '✓ ' : '') + LANG_LABELS[lang];
   document.getElementById(lang + '-box').style.display = on[lang] ? '' : 'none';
+  if (lang === 'other') {
+    document.getElementById('otherLangSelect').style.display = on.other ? '' : 'none';
+    if (on.other) updateOtherLabel();
+  }
   updateGoBtnText();
   markStale();
+}
+
+function updateOtherLabel() {
+  const sel = document.getElementById('otherLangSelect');
+  const lang = EXTRA_LANGS.find(l => l.name === sel.value);
+  document.getElementById('other-label').textContent = lang ? (lang.flag + ' ' + lang.kr) : '기타';
 }
 
 function isKoreanText(text) {
@@ -190,7 +263,7 @@ function onInputChange(el) {
 }
 
 function markStale() {
-  ['cn', 'en', 'ko'].forEach(l => {
+  ['cn', 'en', 'ko', 'other'].forEach(l => {
     const out = document.getElementById(l + '-out');
     if (!out.classList.contains('empty') && !out.classList.contains('err')) {
       document.getElementById(l + '-box').classList.add('stale');
@@ -209,7 +282,7 @@ function setOut(id, text, cls) {
 async function go() {
   const text = document.getElementById('inp').value.trim();
   if (!text) { document.getElementById('status').textContent = '⚠ 번역할 텍스트를 입력하세요.'; return; }
-  const jobs = ['cn', 'en', 'ko'].filter(l => on[l]);
+  const jobs = ['cn', 'en', 'ko', 'other'].filter(l => on[l]);
   if (!jobs.length) { document.getElementById('status').textContent = '⚠ 언어를 선택하세요.'; return; }
 
   document.getElementById('gobtn').disabled = true;
@@ -224,10 +297,12 @@ async function go() {
 
   await Promise.all(jobs.map(async lang => {
     try {
+      const reqBody = { text, lang, mode };
+      if (lang === 'other') reqBody.targetLang = document.getElementById('otherLangSelect').value;
       const r = await fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, lang, mode })
+        body: JSON.stringify(reqBody)
       });
       if (!r.ok) {
         const e = await r.text();
@@ -259,7 +334,7 @@ function clearAll() {
   const inp = document.getElementById('inp');
   inp.value = '';
   document.getElementById('cnt').textContent = '0자';
-  ['cn', 'en', 'ko'].forEach(l => {
+  ['cn', 'en', 'ko', 'other'].forEach(l => {
     setOut(l + '-out', '번역 결과 표시', 'empty');
     document.getElementById(l + '-box').classList.remove('stale');
     const cpBtn = document.getElementById('cp-' + l);

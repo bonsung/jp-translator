@@ -26,12 +26,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { text, lang, mode } = req.body;
+    const { text, lang, mode, targetLang } = req.body;
     if (!text || !lang) {
       return res.status(400).json({ error: '파라미터 오류' });
     }
+    if (lang === 'other' && !targetLang) {
+      return res.status(400).json({ error: '파라미터 오류' });
+    }
 
-    const target = TARGET_NAME[lang] || TARGET_NAME.ko;
+    const target = lang === 'other' ? targetLang : (TARGET_NAME[lang] || TARGET_NAME.ko);
     const translateStyle = MODE_DESC[mode] || MODE_DESC.business;
     const polishStyle = POLISH_DESC[mode] || POLISH_DESC.business;
 
