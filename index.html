@@ -127,6 +127,7 @@ textarea::placeholder { color: #ccc; }
 <script>
 let mode = 'business';
 let on = { cn: true, en: true, ko: false };
+updateGoBtnText();
 let cnRawText = '';
 
 function escapeHtml(s) {
@@ -162,7 +163,19 @@ function tog(lang) {
   btn.classList.toggle('off', !on[lang]);
   btn.textContent = (on[lang] ? '✓ ' : '') + (lang === 'cn' ? '🇨🇳 중국어' : lang === 'en' ? '🇺🇸 영어' : '🇰🇷 한국어');
   document.getElementById(lang + '-box').style.display = on[lang] ? '' : 'none';
+  updateGoBtnText();
   markStale();
+}
+
+function updateGoBtnText() {
+  const gobtn = document.getElementById('gobtn');
+  if (on.cn || on.en) {
+    gobtn.textContent = '→ 번역';
+  } else if (on.ko) {
+    gobtn.textContent = '→ 다듬기';
+  } else {
+    gobtn.textContent = '→ 번역';
+  }
 }
 
 function onInputChange(el) {
