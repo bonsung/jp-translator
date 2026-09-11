@@ -167,12 +167,17 @@ function tog(lang) {
   markStale();
 }
 
+function isKoreanText(text) {
+  return /[가-힣]/.test(text);
+}
+
 function updateGoBtnText() {
   const gobtn = document.getElementById('gobtn');
+  const text = document.getElementById('inp').value.trim();
   if (on.cn || on.en) {
     gobtn.textContent = '→ 번역';
   } else if (on.ko) {
-    gobtn.textContent = '→ 다듬기';
+    gobtn.textContent = (text && isKoreanText(text)) ? '→ 다듬기' : '→ 번역';
   } else {
     gobtn.textContent = '→ 번역';
   }
@@ -180,6 +185,7 @@ function updateGoBtnText() {
 
 function onInputChange(el) {
   document.getElementById('cnt').textContent = el.value.length + '자';
+  updateGoBtnText();
   markStale();
 }
 
